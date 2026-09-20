@@ -11,43 +11,22 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
       - name: Setup Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v7
         with:
-          python-version: "3.11"
+          python-version: "3.x"
 
       - name: Setup Java
-        uses: actions/setup-java@v4
+        uses: actions/setup-java@v6
         with:
           java-version: "17"
           distribution: "temurin"
 
-      - name: Install Linux dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            git \
-            zip \
-            unzip \
-            autoconf \
-            automake \
-            libtool \
-            libltdl-dev \
-            pkg-config \
-            zlib1g-dev \
-            libncurses5-dev \
-            libncursesw5-dev \
-            libtinfo5 \
-            cmake \
-            libffi-dev \
-            libssl-dev \
-            build-essential
+      - name: Checkout
+        uses: actions/checkout@v7
 
       - name: Install Buildozer
         run: |
@@ -55,15 +34,21 @@ jobs:
           pip install buildozer
           pip install "cython==0.29.37"
 
-      - name: Enable Android SDK license acceptance
+      - name: Configure Android SDK license
         run: |
           sed -i.bak \
-            's/# android.accept_sdk_license = False/android.accept_sdk_license = True/' \
+            "s/# android.accept_sdk_license = False/android.accept_sdk_license = True/" \
             buildozer.spec
 
-      - name: Prepare Android tools
+      - name: Download Android SDK, NDK and p4a
         run: |
           buildozer android p4a -- --help
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt update
+          sudo apt -y install automake libltdl-dev
 
       - name: Build APK
         run: |
